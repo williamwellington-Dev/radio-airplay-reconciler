@@ -5,6 +5,8 @@ RAW = Path(__file__).resolve().parent.parent / "data" / "raw"
 
 COLUMNS = ["station", "played_at", "item_type", "title", "artist", "isrc", "duration_sec"]
 
+CATEGORY_MAP = {"music": "song", "commercial": "spot", "imaging": "liner"}  # NEW
+
 
 def mmss_to_sec(s):
     """'3:40' -> 220"""
@@ -26,7 +28,22 @@ def load_station_a():
     return out[COLUMNS]
 
 
+# Station B
+def load_station_b():
+    df = pd.read_csv(RAW / "station_b_log.csv")
+    out = pd.DataFrame({
+        "station": "CXRB",
+        "played_at": pd.to_datetime(df["Timestamp"]).dt.tz_convert("America/Toronto").dt.tz_localize(None),
+        "item_type": df["Category"].map(CATEGORY_MAP),
+        "title": df["Song Title"],
+        "artist": df["Performer"],
+        "isrc": None,
+        "duration_sec": df["Duration Sec"],
+    })
+    return out[COLUMNS]
+
+
 if __name__ == "__main__":
-    a = load_station_a()
-    print(a.head())
-    print(a.dtypes)
+    b = load_station_b()  # Station B
+    print(b.head())
+    print(b.dtypes)
