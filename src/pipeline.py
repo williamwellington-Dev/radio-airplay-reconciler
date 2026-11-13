@@ -1,3 +1,4 @@
+import numpy as np  # NEW
 import pandas as pd
 from pathlib import Path
 
@@ -5,7 +6,7 @@ RAW = Path(__file__).resolve().parent.parent / "data" / "raw"
 
 COLUMNS = ["station", "played_at", "item_type", "title", "artist", "isrc", "duration_sec"]
 
-CATEGORY_MAP = {"music": "song", "commercial": "spot", "imaging": "liner"}  # NEW
+CATEGORY_MAP = {"music": "song", "commercial": "spot", "imaging": "liner"}
 
 
 def mmss_to_sec(s):
@@ -43,7 +44,23 @@ def load_station_b():
     return out[COLUMNS]
 
 
+# NEW: Station C
+def load_station_c():
+    df = pd.read_csv(RAW / "station_c_log.csv")
+    out = pd.DataFrame({
+        "station": "CXRC",
+        "played_at": pd.to_datetime(df["Date"] + " " + df["Start"], format="%m/%d/%Y %I:%M:%S %p"),
+        "item_type": np.where(df["Artist Name"].notna(), "song", "other"),
+        "title": df["Cut Title"],
+        "artist": df["Artist Name"],
+        "isrc": df["ISRC"],
+        "duration_sec": pd.to_timedelta(df["Length"]).dt.total_seconds().astype(int),
+    })
+    return out[COLUMNS]
+
+
 if __name__ == "__main__":
-    b = load_station_b()  # Station B
-    print(b.head())
-    print(b.dtypes)
+    c = load_station_c()  # NEW: now testing station C
+    print(c.head())
+    print(c.dtypes)
+    print(c["item_type"].value_counts())
