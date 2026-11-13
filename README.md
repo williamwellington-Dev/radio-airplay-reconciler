@@ -2,7 +2,7 @@
 
 Radio stations log every song, ad and station ID they air, but each automation system exports that log in a different format. This project takes as-played logs from three stations, cleans them into one table, matches every song play to a record label's catalog, and checks each station against the CRTC's 35% Canadian content (CanCon) minimum.
 
-**[Live dashboard →](#)** <!-- replace # with your Streamlit Cloud link -->
+**[Live dashboard →](https://radio-airplay-reconciler.streamlit.app)**
 
 ![Dashboard screenshot](docs/screenshot.png)
 
