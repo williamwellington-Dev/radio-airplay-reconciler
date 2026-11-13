@@ -1,4 +1,4 @@
-import numpy as np  # NEW
+import numpy as np
 import pandas as pd
 from pathlib import Path
 
@@ -15,6 +15,7 @@ def mmss_to_sec(s):
     return int(minutes) * 60 + int(seconds)
 
 
+# Station A
 def load_station_a():
     df = pd.read_csv(RAW / "CXRA_asplayed.csv")
     out = pd.DataFrame({
@@ -44,7 +45,7 @@ def load_station_b():
     return out[COLUMNS]
 
 
-# NEW: Station C
+# Station C
 def load_station_c():
     df = pd.read_csv(RAW / "station_c_log.csv")
     out = pd.DataFrame({
@@ -59,8 +60,20 @@ def load_station_c():
     return out[COLUMNS]
 
 
+# Combine all three stations into one table
+def load_all():
+    combined = pd.concat(
+        [load_station_a(), load_station_b(), load_station_c()],
+        ignore_index=True,
+    )
+    before = len(combined)
+    combined = combined.drop_duplicates(subset=["station", "played_at", "title"])
+    print(f"Removed {before - len(combined)} duplicate rows")
+    return combined.sort_values(["station", "played_at"]).reset_index(drop=True)
+
+
 if __name__ == "__main__":
-    c = load_station_c()  # NEW: now testing station C
-    print(c.head())
-    print(c.dtypes)
-    print(c["item_type"].value_counts())
+    df = load_all()
+    print(df.head())
+    print(df.dtypes)
+    print(df.groupby(["station", "item_type"]).size())
