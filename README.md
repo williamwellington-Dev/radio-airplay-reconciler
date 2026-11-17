@@ -37,6 +37,25 @@ One week of logs (Oct 26 – Nov 1, 2026), 11,787 items, 5,454 song plays:
    - Unmatched songs
    - Missing ISRCs
 
+## Snowflake version
+
+The same pipeline also runs end to end inside **Snowflake**, as SQL ELT plus a Streamlit in Snowflake app. Its results match the Python version exactly: 11,787 plays, 390 duplicates removed, the same match counts per station and the same CanCon results.
+
+![Streamlit in Snowflake app](docs/snowflake_app.png)
+
+| Script | What it does |
+|---|---|
+| `snowflake/01_setup.sql` | Warehouse (auto-suspends after 60s), `AIRPLAY` database, `RAW` / `CLEAN` / `REPORTING` schemas, file format and upload stage |
+| `snowflake/02_load.sql` | `COPY INTO` the four CSVs into raw tables, all columns as text (load first, transform after) |
+| `snowflake/03_transform.sql` | A `CLEAN_TEXT` SQL function, one standard `PLAYS` table for all stations (time zones, durations, date formats), dedupe with `QUALIFY ROW_NUMBER()`, then ISRC-first matching with a name fallback |
+| `snowflake/04_checks.sql` | `COMPLIANCE_REPORT` view: CanCon share, logging gaps (`LEAD` window function), unmatched songs and missing ISRCs. It's a view, so it updates when new logs load |
+| `snowflake/05_fuzzy_match.sql` | Review queue for unmatched songs: the closest catalog tracks by `JAROWINKLER_SIMILARITY`, each labelled *likely match*, *possible match* or *probably not in catalog* |
+| `snowflake/streamlit_app.py` | Streamlit in Snowflake dashboard: station filter, headline numbers, compliance checks, CanCon by day, match methods, review queue |
+
+The fuzzy matcher scores the 4 unmatched songs at only 69–72 out of 100 and flags them as *probably not in catalog*, which is correct: they aren't in the label's catalog. It doesn't force a wrong match, which in royalty work would pay the wrong artist.
+
+To run it: create a Snowflake account, run `01_setup.sql`, upload the four files in `data/raw/` to the `AIRPLAY.RAW.LANDING` stage, run scripts `02`–`05` in order, then create a Streamlit app and paste in `streamlit_app.py`.
+
 ## Run it locally
 
 ```bash
@@ -58,6 +77,7 @@ src/generate_data.py    Builds the synthetic catalog and station logs
 src/pipeline.py         Load, combine, dedupe, clean, match
 src/checks.py           CanCon and data-quality checks
 data/raw/               Generated sample data
+snowflake/              SQL scripts 01-05 + Streamlit in Snowflake app
 ```
 
 ## About the data
@@ -71,6 +91,6 @@ All data is synthetic, made by `src/generate_data.py`. The station call signs, a
 
 ## Built with
 
-Python · pandas · NumPy · Streamlit · Altair
+Python · pandas · NumPy · Streamlit · Altair · Snowflake (SQL, Streamlit in Snowflake)
 
 Built by [William Wellington](https://www.linkedin.com/in/william-wellington-819a1b317), a broadcast engineer working with radio automation and as-played logs day to day.

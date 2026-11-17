@@ -1,3 +1,7 @@
 .venv/
 __pycache__/
 .vs/
+
+# not part of the project
+snowflake/05_cortex_ai.sql
+snowflake/06_cortex_llm_verdict_optional.sql
